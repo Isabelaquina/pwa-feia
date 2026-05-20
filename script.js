@@ -142,8 +142,9 @@ async function renderDashboard() {
     const html = `
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="emoji">📚</div>
-                <div class="label">Empréstimos Hoje</div>
+                <div class="emoji">💰</div>
+                <div class="valor">${formatarMoeda(dados.vendas_hoje)}</div>
+                <div class="label">Vendas Hoje</div>
             </div>
             <div class="stat-card">
                 <div class="emoji">📦</div>
@@ -152,21 +153,23 @@ async function renderDashboard() {
             </div>
             <div class="stat-card">
                 <div class="emoji">👥</div>
-                <div class="label">Alunos</div>
+                <div class="valor">${dados.total_clientes}</div>
+                <div class="label">Clientes</div>
             </div>
             <div class="stat-card">
                 <div class="emoji">📝</div>
-                <div class="label">Dívidas</div>
+                <div class="valor">${formatarMoeda(dados.total_dividas)}</div>
+                <div class="label">Em Fiado</div>
             </div>
         </div>
         
         <div class="card">
-            <h2>🏆 Livros Mais Populares</h2>
+            <h2>🏆 Produtos Mais Vendidos</h2>
             <canvas id="graficoProdutos" height="200"></canvas>
         </div>
         
         <div class="card">
-            <h2>🔄 Últimos Empréstimos</h2>
+            <h2>🔄 Últimas Vendas</h2>
             <div class="table-container">
                 <table>
                     <thead>
@@ -178,10 +181,10 @@ async function renderDashboard() {
                                 <td>${new Date(v.data).toLocaleDateString('pt-BR')}</td>
                                 <td>${v.cliente_nome}</td>
                                 <td>${formatarMoeda(v.total)}</td>
-                                <td>${v.tipo === 'emprestado' ? '📝 Emprestado'}</td>
+                                <td>${v.tipo === 'fiado' ? '📝 Fiado' : '💰 À vista'}</td>
                             </tr>
                         `).join('')}
-                        ${dados.ultimas_vendas.length === 0 ? '<tr><td colspan="4" style="text-align:center">Nenhum empréstimo ainda</td></tr>' : ''}
+                        ${dados.ultimas_vendas.length === 0 ? '<tr><td colspan="4" style="text-align:center">Nenhuma venda ainda</td></tr>' : ''}
                     </tbody>
                 </table>
             </div>
@@ -197,7 +200,7 @@ async function renderDashboard() {
             data: {
                 labels: dados.mais_vendidos.map(m => m.nome),
                 datasets: [{
-                    label: 'Quantidade',
+                    label: 'Quantidade Vendida',
                     data: dados.mais_vendidos.map(m => m.quantidade),
                     backgroundColor: '#4CAF50',
                     borderRadius: 8
@@ -219,10 +222,10 @@ async function renderVendas() {
     
     const html = `
         <div class="card">
-            <h2>📚 Novo empréstimo</h2>
+            <h2>💰 Nova Venda</h2>
             
             <div class="form-group">
-                <label>👤 Aluno</label>
+                <label>👤 Cliente (opcional para fiado)</label>
                 <select id="clienteVenda">
                     <option value="">Consumidor Final</option>
                     ${clientes.map(c => `<option value="${c.id}" data-divida="${c.divida}" data-limite="${c.limite}">${c.nome} (Limite: ${formatarMoeda(c.limite)} | Deve: ${formatarMoeda(c.divida)})</option>`).join('')}
@@ -230,10 +233,10 @@ async function renderVendas() {
             </div>
             
             <div class="form-group">
-                <label>➕ Adicionar Livro</label>
+                <label>➕ Adicionar Produto</label>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <select id="produtoSelecionado" style="flex: 2">
-                        <option value="">Selecione um livro</option>
+                        <option value="">Selecione um produto</option>
                         ${produtos.map(p => `<option value="${p.id}" data-preco="${p.preco}" data-estoque="${p.estoque}">${p.nome} - ${formatarMoeda(p.preco)} (${p.estoque} und)</option>`).join('')}
                     </select>
                     <input type="number" id="quantidade" value="1" min="1" style="width: 80px">
@@ -241,10 +244,12 @@ async function renderVendas() {
                 </div>
             </div>
             
+            <div id="carrinhoItens"></div>
+            <div class="total-carrinho" id="totalCarrinho">Total: R$ 0,00</div>
             
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn btn-primary" style="flex:1" onclick="finalizar('emprestado')">✅ Finalizar</button>
-                <button class="btn btn-warning" style="flex:1" onclick="finalizar('devendo')">📝</button>
+                <button class="btn btn-primary" style="flex:1" onclick="finalizarVenda('avista')">✅ Finalizar (à vista)</button>
+                <button class="btn btn-warning" style="flex:1" onclick="finalizarVenda('fiado')">📝 Vender Fiado</button>
             </div>
         </div>
     `;
@@ -368,7 +373,7 @@ async function renderProdutos() {
     
     const html = `
         <div class="card">
-            <h2>📚 Livros</h2>
+            <h2>📦 Produtos</h2>
             <button class="btn btn-primary" onclick="abrirModalProduto()" style="margin-bottom:15px">+ Novo Produto</button>
             
             <div class="table-container">
@@ -795,4 +800,3 @@ setInterval(sincronizarVendasPendentes, 30000);
 sincronizarVendasPendentes();
 
 mudarPagina('dashboard');
-

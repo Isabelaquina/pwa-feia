@@ -1,6 +1,6 @@
 {
-  "name": "Mercearia do João",
-  "short_name": "Mercearia",
+  "name": "Bibioteca",
+  "short_name": "Biblioteca",
   "description": "Sistema de gestão para pequenos comércios",
   "start_url": "/",
   "display": "standalone",
